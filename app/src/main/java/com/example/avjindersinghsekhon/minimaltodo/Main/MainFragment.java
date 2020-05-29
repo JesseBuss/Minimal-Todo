@@ -59,7 +59,6 @@ public class MainFragment extends AppDefaultFragment {
     private FloatingActionButton mAddToDoItemFAB;
     private ArrayList<ToDoItem> mToDoItemsArrayList;
     private CoordinatorLayout mCoordLayout;
-    public static final String TODOITEM = "com.avjindersinghsekhon.com.avjindersinghsekhon.minimaltodo.MainActivity";
     private MainFragment.BasicListAdapter adapter;
     private static final int REQUEST_ID_TODO_ITEM = 100;
     private ToDoItem mJustDeletedToDoItem;
@@ -91,10 +90,32 @@ public class MainFragment extends AppDefaultFragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         app = (AnalyticsApplication) getActivity().getApplication();
-//        CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
-//                .setDefaultFontPath("fonts/Aller_Regular.tff").setFontAttrId(R.attr.fontPath).build());
 
-        //We recover the theme we've set and setTheme accordingly
+        setTheme();
+        setChange();
+
+        storeRetrieveData = new StoreRetrieveData(getContext(), FILENAME);
+        mToDoItemsArrayList = getLocallyStoredData(storeRetrieveData);
+        adapter = new MainFragment.BasicListAdapter(mToDoItemsArrayList);
+        setAlarms();
+
+        mCoordLayout = view.findViewById(R.id.myCoordinatorLayout);
+        mAddToDoItemFAB = view.findViewById(R.id.addToDoItemFAB);
+
+        mAddToDoItemFAB.setOnClickListener(new View.OnClickListener() {
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public void onClick(View v) {
+                app.send(this, "Action", "FAB pressed");
+                AddToDoActivity.startForResult(MainFragment.this, REQUEST_ID_TODO_ITEM);
+            }
+        });
+
+        initRecyclerView(view);
+    }
+
+    private void setTheme() {
         theme = getActivity().getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).getString(THEME_SAVED, LIGHTTHEME);
 
         if (theme.equals(LIGHTTHEME)) {
@@ -103,86 +124,18 @@ public class MainFragment extends AppDefaultFragment {
             mTheme = R.style.CustomStyle_DarkTheme;
         }
         this.getActivity().setTheme(mTheme);
+    }
 
-        super.onCreate(savedInstanceState);
-
-
+    private void setChange() {
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences(SHARED_PREF_DATA_SET_CHANGED, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean(CHANGE_OCCURED, false);
         editor.apply();
+    }
 
-        storeRetrieveData = new StoreRetrieveData(getContext(), FILENAME);
-        mToDoItemsArrayList = getLocallyStoredData(storeRetrieveData);
-        adapter = new MainFragment.BasicListAdapter(mToDoItemsArrayList);
-        setAlarms();
+    private void initRecyclerView(View view) {
 
-
-//        adapter.notifyDataSetChanged();
-//        storeRetrieveData = new StoreRetrieveData(this, FILENAME);
-//
-//        try {
-//            mToDoItemsArrayList = storeRetrieveData.loadFromFile();
-////            Log.d("OskarSchindler", "Arraylist Length: "+mToDoItemsArrayList.size());
-//        } catch (IOException | JSONException e) {
-////            Log.d("OskarSchindler", "IOException received");
-//            e.printStackTrace();
-//        }
-//
-//        if(mToDoItemsArrayList==null){
-//            mToDoItemsArrayList = new ArrayList<>();
-//        }
-//
-
-//        mToDoItemsArrayList = new ArrayList<>();
-//        makeUpItems(mToDoItemsArrayList, testStrings.length);
-
-
-        mCoordLayout = (CoordinatorLayout) view.findViewById(R.id.myCoordinatorLayout);
-        mAddToDoItemFAB = (FloatingActionButton) view.findViewById(R.id.addToDoItemFAB);
-
-        mAddToDoItemFAB.setOnClickListener(new View.OnClickListener() {
-
-            @SuppressWarnings("deprecation")
-            @Override
-            public void onClick(View v) {
-                app.send(this, "Action", "FAB pressed");
-                Intent newTodo = new Intent(getContext(), AddToDoActivity.class);
-                ToDoItem item = new ToDoItem("","", false, null);
-                int color = ColorGenerator.MATERIAL.getRandomColor();
-                item.setTodoColor(color);
-                //noinspection ResourceType
-//                String color = getResources().getString(R.color.primary_ligher);
-                newTodo.putExtra(TODOITEM, item);
-//                View decorView = getWindow().getDecorView();
-//                View navView= decorView.findViewById(android.R.id.navigationBarBackground);
-//                View statusView = decorView.findViewById(android.R.id.statusBarBackground);
-//                Pair<View, String> navBar ;
-//                if(navView!=null){
-//                    navBar = Pair.create(navView, navView.getTransitionName());
-//                }
-//                else{
-//                    navBar = null;
-//                }
-//                Pair<View, String> statusBar= Pair.create(statusView, statusView.getTransitionName());
-//                ActivityOptions options;
-//                if(navBar!=null){
-//                    options = ActivityOptions.makeSceneTransitionAnimation(MainActivity.this, navBar, statusBar);
-//                }
-//                else{
-//                    options = ActivityOptions.makeSceneTransitionAnimation(MainActivity.this, statusBar);
-//                }
-
-//                startActivity(new Intent(MainActivity.this, TestLayout.class), options.toBundle());
-//                startActivityForResult(newTodo, REQUEST_ID_TODO_ITEM, options.toBundle());
-
-                startActivityForResult(newTodo, REQUEST_ID_TODO_ITEM);
-            }
-        });
-
-
-//        mRecyclerView = (RecyclerView)findViewById(R.id.toDoRecyclerView);
-        mRecyclerView = (RecyclerViewEmptySupport) view.findViewById(R.id.toDoRecyclerView);
+        mRecyclerView = view.findViewById(R.id.toDoRecyclerView);
         if (theme.equals(LIGHTTHEME)) {
             mRecyclerView.setBackgroundColor(getResources().getColor(R.color.primary_lightest));
         }
@@ -217,9 +170,6 @@ public class MainFragment extends AppDefaultFragment {
 
 
         mRecyclerView.setAdapter(adapter);
-//        setUpTransitions();
-
-
     }
 
     public static ArrayList<ToDoItem> getLocallyStoredData(StoreRetrieveData storeRetrieveData) {
