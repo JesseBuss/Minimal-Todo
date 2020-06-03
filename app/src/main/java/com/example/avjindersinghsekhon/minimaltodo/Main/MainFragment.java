@@ -53,6 +53,7 @@ import java.util.Date;
 import static android.app.Activity.RESULT_CANCELED;
 import static android.content.Context.ALARM_SERVICE;
 import static android.content.Context.MODE_PRIVATE;
+import static com.example.avjindersinghsekhon.minimaltodo.AddToDo.AddToDoActivity.TODOITEM;
 
 public class MainFragment extends AppDefaultFragment {
     private RecyclerViewEmptySupport mRecyclerView;
@@ -189,46 +190,17 @@ public class MainFragment extends AppDefaultFragment {
 
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        app.send(this);
-
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(SHARED_PREF_DATA_SET_CHANGED, MODE_PRIVATE);
-        if (sharedPreferences.getBoolean(ReminderFragment.EXIT, false)) {
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean(ReminderFragment.EXIT, false);
-            editor.apply();
-            getActivity().finish();
-        }
-        /*
-        We need to do this, as this activity's onCreate won't be called when coming back from SettingsActivity,
-        thus our changes to dark/light mode won't take place, as the setContentView() is not called again.
-        So, inside our SettingsFragment, whenever the checkbox's value is changed, in our shared preferences,
-        we mark our recreate_activity key as true.
-
-        Note: the recreate_key's value is changed to false before calling recreate(), or we woudl have ended up in an infinite loop,
-        as onResume() will be called on recreation, which will again call recreate() and so on....
-        and get an ANR
-
-         */
-        if (getActivity().getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).getBoolean(RECREATE_ACTIVITY, false)) {
-            SharedPreferences.Editor editor = getActivity().getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).edit();
-            editor.putBoolean(RECREATE_ACTIVITY, false);
-            editor.apply();
-            getActivity().recreate();
-        }
-
-
-    }
 
     @Override
     public void onStart() {
-        app = (AnalyticsApplication) getActivity().getApplication();
         super.onStart();
+
+        refreshAdapter();
+    }
+
+    private void refreshAdapter() {
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences(SHARED_PREF_DATA_SET_CHANGED, MODE_PRIVATE);
         if (sharedPreferences.getBoolean(CHANGE_OCCURED, false)) {
-
             mToDoItemsArrayList = getLocallyStoredData(storeRetrieveData);
             adapter = new MainFragment.BasicListAdapter(mToDoItemsArrayList);
             mRecyclerView.setAdapter(adapter);
@@ -236,10 +208,7 @@ public class MainFragment extends AppDefaultFragment {
 
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putBoolean(CHANGE_OCCURED, false);
-//            editor.commit();
             editor.apply();
-
-
         }
     }
 
@@ -260,18 +229,42 @@ public class MainFragment extends AppDefaultFragment {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        app.send(this);
 
-    public void addThemeToSharedPreferences(String theme) {
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(THEME_SAVED, theme);
-        editor.apply();
+        finishIfNecessary();
+        recreateIfNecessary();
     }
 
+    private void finishIfNecessary() {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(SHARED_PREF_DATA_SET_CHANGED, MODE_PRIVATE);
+        if (sharedPreferences.getBoolean(ReminderFragment.EXIT, false)) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean(ReminderFragment.EXIT, false);
+            editor.apply();
+            getActivity().finish();
+        }
+    }
 
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getActivity().getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    /*
+    We need to do this, as this activity's onCreate won't be called when coming back from SettingsActivity,
+    thus our changes to dark/light mode won't take place, as the setContentView() is not called again.
+    So, inside our SettingsFragment, whenever the checkbox's value is changed, in our shared preferences,
+    we mark our recreate_activity key as true.
+
+    Note: the recreate_key's value is changed to false before calling recreate(), or we woudl have ended up in an infinite loop,
+    as onResume() will be called on recreation, which will again call recreate() and so on....
+    and get an ANR
+     */
+    private void recreateIfNecessary() {
+        if (getActivity().getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).getBoolean(RECREATE_ACTIVITY, false)) {
+            SharedPreferences.Editor editor = getActivity().getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).edit();
+            editor.putBoolean(RECREATE_ACTIVITY, false);
+            editor.apply();
+            getActivity().recreate();
+        }
     }
 
     @Override
@@ -281,22 +274,6 @@ public class MainFragment extends AppDefaultFragment {
                 Intent i = new Intent(getContext(), AboutActivity.class);
                 startActivity(i);
                 return true;
-//            case R.id.switch_themes:
-//                if(mTheme == R.style.CustomStyle_DarkTheme){
-//                    addThemeToSharedPreferences(LIGHTTHEME);
-//                }
-//                else{
-//                    addThemeToSharedPreferences(DARKTHEME);
-//                }
-//
-////                if(mTheme == R.style.CustomStyle_DarkTheme){
-////                    mTheme = R.style.CustomStyle_LightTheme;
-////                }
-////                else{
-////                    mTheme = R.style.CustomStyle_DarkTheme;
-////                }
-//                this.recreate();
-//                return true;
             case R.id.preferences:
                 Intent intent = new Intent(getContext(), SettingsActivity.class);
                 startActivity(intent);
@@ -316,13 +293,7 @@ public class MainFragment extends AppDefaultFragment {
             }
             boolean existed = false;
 
-            if (item.hasReminder() && item.getToDoDate() != null) {
-                Intent i = new Intent(getContext(), TodoNotificationService.class);
-                i.putExtra(TodoNotificationService.TODOTEXT, item.getToDoText());
-                i.putExtra(TodoNotificationService.TODOUUID, item.getIdentifier());
-                createAlarm(i, item.getIdentifier().hashCode(), item.getToDoDate().getTime());
-//                Log.d("OskarSchindler", "Alarm Created: "+item.getToDoText()+" at "+item.getToDoDate());
-            }
+            createAlarmIfNecessary(item);
 
             for (int i = 0; i < mToDoItemsArrayList.size(); i++) {
                 if (item.getIdentifier().equals(mToDoItemsArrayList.get(i).getIdentifier())) {
@@ -335,8 +306,15 @@ public class MainFragment extends AppDefaultFragment {
             if (!existed) {
                 addToDataStore(item);
             }
+        }
+    }
 
-
+    private void createAlarmIfNecessary(ToDoItem item) {
+        if (item.hasReminder() && item.getToDoDate() != null) {
+            Intent i = new Intent(getContext(), TodoNotificationService.class);
+            i.putExtra(TodoNotificationService.TODOTEXT, item.getToDoText());
+            i.putExtra(TodoNotificationService.TODOUUID, item.getIdentifier());
+            createAlarm(i, item.getIdentifier().hashCode(), item.getToDoDate().getTime());
         }
     }
 
@@ -353,7 +331,6 @@ public class MainFragment extends AppDefaultFragment {
         AlarmManager am = getAlarmManager();
         PendingIntent pi = PendingIntent.getService(getContext(), requestCode, i, PendingIntent.FLAG_UPDATE_CURRENT);
         am.set(AlarmManager.RTC_WAKEUP, timeInMillis, pi);
-//        Log.d("OskarSchindler", "createAlarm "+requestCode+" time: "+timeInMillis+" PI "+pi.toString());
     }
 
     private void deleteAlarm(Intent i, int requestCode) {
@@ -368,18 +345,6 @@ public class MainFragment extends AppDefaultFragment {
     private void addToDataStore(ToDoItem item) {
         mToDoItemsArrayList.add(item);
         adapter.notifyItemInserted(mToDoItemsArrayList.size() - 1);
-
-    }
-
-
-    public void makeUpItems(ArrayList<ToDoItem> items, int len) {
-        for (String testString : testStrings) {
-            ToDoItem item = new ToDoItem(testString,testString, false, new Date());
-            //noinspection ResourceType
-//            item.setTodoColor(getResources().getString(R.color.red_secondary));
-            items.add(item);
-        }
-
     }
 
     public class BasicListAdapter extends RecyclerView.Adapter<BasicListAdapter.ViewHolder> implements ItemTouchHelperClass.ItemTouchHelperAdapter {
@@ -544,21 +509,6 @@ public class MainFragment extends AppDefaultFragment {
         }
     }
 
-    //Used when using custom fonts
-//    @Override
-//    protected void attachBaseContext(Context newBase) {
-//        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
-//    }
-
-    private void saveDate() {
-        try {
-            storeRetrieveData.saveToFile(mToDoItemsArrayList);
-        } catch (JSONException | IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
     @Override
     public void onPause() {
         super.onPause();
@@ -569,31 +519,12 @@ public class MainFragment extends AppDefaultFragment {
         }
     }
 
-
     @Override
     public void onDestroy() {
-
         super.onDestroy();
         mRecyclerView.removeOnScrollListener(customRecyclerScrollViewListener);
     }
 
-
-    //    public void setUpTransitions(){
-//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-//            Transition enterT = new Slide(Gravity.RIGHT);
-//            enterT.setDuration(500);
-//
-//            Transition exitT = new Slide(Gravity.LEFT);
-//            exitT.setDuration(300);
-//
-//            Fade fade = new Fade();
-//            fade.setDuration(500);
-//
-//            getWindow().setExitTransition(fade);
-//            getWindow().setReenterTransition(fade);
-//
-//        }
-//    }
     @Override
     protected int layoutRes() {
         return R.layout.fragment_main;
