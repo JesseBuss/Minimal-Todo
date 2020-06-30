@@ -7,7 +7,7 @@ import io.reactivex.Observable
 @Dao
 interface ToDoDao {
     @Query("SELECT * FROM to_do_entity")
-    fun getAll(): Observable<ToDoEntity>
+    fun getAll(): Observable<List<ToDoEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(vararg items: ToDoEntity)

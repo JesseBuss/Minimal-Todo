@@ -86,7 +86,6 @@ public class MainFragment extends AppDefaultFragment {
             "Get my dry cleaning"
     };
 
-
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
