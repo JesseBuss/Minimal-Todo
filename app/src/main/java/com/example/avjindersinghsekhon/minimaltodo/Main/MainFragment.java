@@ -9,8 +9,16 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+
+import com.example.avjindersinghsekhon.minimaltodo.Main.viewmodel.ToDoViewModel;
+import com.example.avjindersinghsekhon.minimaltodo.Main.viewmodel.ToDoViewModelFactory;
+import com.example.avjindersinghsekhon.minimaltodo.database.AppDatabase;
+import com.example.avjindersinghsekhon.minimaltodo.database.dao.ToDoDao;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -49,6 +57,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.content.Context.ALARM_SERVICE;
@@ -86,8 +95,24 @@ public class MainFragment extends AppDefaultFragment {
             "Get my dry cleaning"
     };
 
+    private ToDoViewModel toDoViewModel;
+
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        toDoViewModel = getViewModel();
+    }
+
+    private ToDoViewModel getViewModel() {
+        ToDoDao dao = AppDatabase.getAppDatabase(getContext()).toDoDao();
+        ToDoViewModelFactory factory = new ToDoViewModelFactory(dao);
+        ViewModelProvider provider = new ViewModelProvider(getViewModelStore(), factory);
+        return provider.get(ToDoViewModel.class);
+    }
+
+    @Override
+    public void onViewCreated(final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         app = (AnalyticsApplication) getActivity().getApplication();
 
@@ -96,7 +121,6 @@ public class MainFragment extends AppDefaultFragment {
 
         storeRetrieveData = new StoreRetrieveData(getContext(), FILENAME);
         mToDoItemsArrayList = getLocallyStoredData(storeRetrieveData);
-        adapter = new MainFragment.BasicListAdapter(mToDoItemsArrayList);
         setAlarms();
 
         mCoordLayout = view.findViewById(R.id.myCoordinatorLayout);
@@ -112,7 +136,13 @@ public class MainFragment extends AppDefaultFragment {
             }
         });
 
-        initRecyclerView(view);
+        toDoViewModel.getItems().observe(getViewLifecycleOwner(), new Observer<List<ToDoItem>>() {
+            @Override
+            public void onChanged(List<ToDoItem> toDoItems) {
+                adapter = new MainFragment.BasicListAdapter(new ArrayList<>(toDoItems));
+                initRecyclerView(view);
+            }
+        });
     }
 
     private void setTheme() {
@@ -139,6 +169,11 @@ public class MainFragment extends AppDefaultFragment {
         if (theme.equals(LIGHTTHEME)) {
             mRecyclerView.setBackgroundColor(getResources().getColor(R.color.primary_lightest));
         }
+
+        if (itemTouchHelper != null) {
+            itemTouchHelper.attachToRecyclerView(null);
+        }
+
         mRecyclerView.setEmptyView(view.findViewById(R.id.toDoEmptyView));
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
@@ -194,7 +229,7 @@ public class MainFragment extends AppDefaultFragment {
     public void onStart() {
         super.onStart();
 
-        refreshAdapter();
+//        refreshAdapter();
     }
 
     private void refreshAdapter() {
@@ -290,21 +325,8 @@ public class MainFragment extends AppDefaultFragment {
             if (item.getToDoText().length() <= 0) {
                 return;
             }
-            boolean existed = false;
-
+            toDoViewModel.saveItem(item);
             createAlarmIfNecessary(item);
-
-            for (int i = 0; i < mToDoItemsArrayList.size(); i++) {
-                if (item.getIdentifier().equals(mToDoItemsArrayList.get(i).getIdentifier())) {
-                    mToDoItemsArrayList.set(i, item);
-                    existed = true;
-                    adapter.notifyDataSetChanged();
-                    break;
-                }
-            }
-            if (!existed) {
-                addToDataStore(item);
-            }
         }
     }
 
@@ -368,8 +390,9 @@ public class MainFragment extends AppDefaultFragment {
             //Remove this line if not using Google Analytics
             app.send(this, "Action", "Swiped Todo Away");
 
-            mJustDeletedToDoItem = items.remove(position);
-            mIndexOfDeletedToDoItem = position;
+            mJustDeletedToDoItem = items.get(position);
+            toDoViewModel.deleteItem(mJustDeletedToDoItem);
+
             Intent i = new Intent(getContext(), TodoNotificationService.class);
             deleteAlarm(i, mJustDeletedToDoItem.getIdentifier().hashCode());
             notifyItemRemoved(position);
@@ -383,14 +406,13 @@ public class MainFragment extends AppDefaultFragment {
 
                             //Comment the line below if not using Google Analytics
                             app.send(this, "Action", "UNDO Pressed");
-                            items.add(mIndexOfDeletedToDoItem, mJustDeletedToDoItem);
+                            toDoViewModel.saveItem(mJustDeletedToDoItem);
                             if (mJustDeletedToDoItem.getToDoDate() != null && mJustDeletedToDoItem.hasReminder()) {
                                 Intent i = new Intent(getContext(), TodoNotificationService.class);
                                 i.putExtra(TodoNotificationService.TODOTEXT, mJustDeletedToDoItem.getToDoText());
                                 i.putExtra(TodoNotificationService.TODOUUID, mJustDeletedToDoItem.getIdentifier());
                                 createAlarm(i, mJustDeletedToDoItem.getIdentifier().hashCode(), mJustDeletedToDoItem.getToDoDate().getTime());
                             }
-                            notifyItemInserted(mIndexOfDeletedToDoItem);
                         }
                     }).show();
         }

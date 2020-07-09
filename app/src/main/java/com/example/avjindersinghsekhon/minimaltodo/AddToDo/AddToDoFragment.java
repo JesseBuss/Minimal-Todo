@@ -47,6 +47,7 @@ import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static android.content.Context.MODE_PRIVATE;
+import static com.example.avjindersinghsekhon.minimaltodo.AddToDo.AddToDoActivity.TODOITEM;
 
 public class AddToDoFragment extends AppDefaultFragment implements DatePickerDialog.OnDateSetListener, TimePickerDialog.OnTimeSetListener {
     private static final String TAG = "AddToDoFragment";
@@ -126,7 +127,7 @@ public class AddToDoFragment extends AppDefaultFragment implements DatePickerDia
         }
 
 
-        mUserToDoItem = (ToDoItem) getActivity().getIntent().getSerializableExtra(MainFragment.TODOITEM);
+        mUserToDoItem = (ToDoItem) getActivity().getIntent().getSerializableExtra(TODOITEM);
 
         mUserEnteredText = mUserToDoItem.getToDoText();
         mUserEnteredDescription = mUserToDoItem.getmToDoDescription();
@@ -606,10 +607,9 @@ public class AddToDoFragment extends AppDefaultFragment implements DatePickerDia
         mUserToDoItem.setHasReminder(mUserHasReminder);
         mUserToDoItem.setToDoDate(mUserReminderDate);
         mUserToDoItem.setTodoColor(mUserColor);
-        i.putExtra(MainFragment.TODOITEM, mUserToDoItem);
+        i.putExtra(TODOITEM, mUserToDoItem);
         getActivity().setResult(result, i);
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
