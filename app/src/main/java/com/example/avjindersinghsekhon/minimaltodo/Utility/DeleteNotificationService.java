@@ -4,7 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
-import com.example.avjindersinghsekhon.minimaltodo.Main.MainFragment;
+import com.example.avjindersinghsekhon.minimaltodo.Main.view.MainFragment;
 
 import java.util.ArrayList;
 import java.util.UUID;

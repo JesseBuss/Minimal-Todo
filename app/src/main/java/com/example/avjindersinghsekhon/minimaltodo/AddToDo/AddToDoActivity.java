@@ -22,6 +22,14 @@ public class AddToDoActivity extends AppDefaultActivity {
 
         fragment.startActivityForResult(newTodo, requestCode);
     }
+
+    public static void startForResult(Fragment fragment, ToDoItem item, int requestCode) {
+        Intent newTodo = new Intent(fragment.getContext(), AddToDoActivity.class);
+        newTodo.putExtra(TODOITEM, item);
+
+        fragment.startActivityForResult(newTodo, requestCode);
+    }
+
     @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
