@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.example.avjindersinghsekhon.minimaltodo.Main.CustomRecyclerScrollViewListener;
+import com.example.avjindersinghsekhon.minimaltodo.Main.model.AlarmHelper;
 import com.example.avjindersinghsekhon.minimaltodo.Main.model.ToDoListener;
 import com.example.avjindersinghsekhon.minimaltodo.Main.viewmodel.ToDoViewModel;
 import com.example.avjindersinghsekhon.minimaltodo.Main.viewmodel.ToDoViewModelFactory;
@@ -107,7 +108,9 @@ public class MainFragment extends AppDefaultFragment implements ToDoListener {
 
     private ToDoViewModel getViewModel() {
         ToDoDao dao = AppDatabase.getAppDatabase(getContext()).toDoDao();
-        ToDoViewModelFactory factory = new ToDoViewModelFactory(dao);
+        AlarmHelper alarmHelper = new AlarmHelper(getContext());
+
+        ToDoViewModelFactory factory = new ToDoViewModelFactory(dao, alarmHelper);
         ViewModelProvider provider = new ViewModelProvider(getViewModelStore(), factory);
         return provider.get(ToDoViewModel.class);
     }
@@ -122,7 +125,6 @@ public class MainFragment extends AppDefaultFragment implements ToDoListener {
 
         storeRetrieveData = new StoreRetrieveData(getContext(), FILENAME);
         mToDoItemsArrayList = getLocallyStoredData(storeRetrieveData);
-        setAlarms();
 
         mCoordLayout = view.findViewById(R.id.myCoordinatorLayout);
         mAddToDoItemFAB = view.findViewById(R.id.addToDoItemFAB);
@@ -225,23 +227,6 @@ public class MainFragment extends AppDefaultFragment implements ToDoListener {
 
     }
 
-    private void setAlarms() {
-        if (mToDoItemsArrayList != null) {
-            for (ToDoItem item : mToDoItemsArrayList) {
-                if (item.hasReminder() && item.getToDoDate() != null) {
-                    if (item.getToDoDate().before(new Date())) {
-                        item.setToDoDate(null);
-                        continue;
-                    }
-                    Intent i = new Intent(getContext(), TodoNotificationService.class);
-                    i.putExtra(TodoNotificationService.TODOUUID, item.getIdentifier());
-                    i.putExtra(TodoNotificationService.TODOTEXT, item.getToDoText());
-                    createAlarm(i, item.getIdentifier().hashCode(), item.getToDoDate().getTime());
-                }
-            }
-        }
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -305,40 +290,6 @@ public class MainFragment extends AppDefaultFragment implements ToDoListener {
                 return;
             }
             toDoViewModel.saveItem(item);
-            createAlarmIfNecessary(item);
-        }
-    }
-
-    private void createAlarmIfNecessary(ToDoItem item) {
-        if (item.hasReminder() && item.getToDoDate() != null) {
-            Intent i = new Intent(getContext(), TodoNotificationService.class);
-            i.putExtra(TodoNotificationService.TODOTEXT, item.getToDoText());
-            i.putExtra(TodoNotificationService.TODOUUID, item.getIdentifier());
-            createAlarm(i, item.getIdentifier().hashCode(), item.getToDoDate().getTime());
-        }
-    }
-
-    private AlarmManager getAlarmManager() {
-        return (AlarmManager) getActivity().getSystemService(ALARM_SERVICE);
-    }
-
-    private boolean doesPendingIntentExist(Intent i, int requestCode) {
-        PendingIntent pi = PendingIntent.getService(getContext(), requestCode, i, PendingIntent.FLAG_NO_CREATE);
-        return pi != null;
-    }
-
-    private void createAlarm(Intent i, int requestCode, long timeInMillis) {
-        AlarmManager am = getAlarmManager();
-        PendingIntent pi = PendingIntent.getService(getContext(), requestCode, i, PendingIntent.FLAG_UPDATE_CURRENT);
-        am.set(AlarmManager.RTC_WAKEUP, timeInMillis, pi);
-    }
-
-    private void deleteAlarm(Intent i, int requestCode) {
-        if (doesPendingIntentExist(i, requestCode)) {
-            PendingIntent pi = PendingIntent.getService(getContext(), requestCode, i, PendingIntent.FLAG_NO_CREATE);
-            pi.cancel();
-            getAlarmManager().cancel(pi);
-            Log.d("OskarSchindler", "PI Cancelled " + doesPendingIntentExist(i, requestCode));
         }
     }
 
@@ -379,24 +330,13 @@ public class MainFragment extends AppDefaultFragment implements ToDoListener {
 
         toDoViewModel.deleteItem(item);
 
-        Intent i = new Intent(getContext(), TodoNotificationService.class);
-        deleteAlarm(i, item.getIdentifier().hashCode());
-
         String toShow = "Todo";
         Snackbar.make(mCoordLayout, "Deleted " + toShow, Snackbar.LENGTH_LONG)
                 .setAction("UNDO", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
-                        //Comment the line below if not using Google Analytics
                         app.send(this, "Action", "UNDO Pressed");
                         toDoViewModel.saveItem(item);
-                        if (item.getToDoDate() != null && item.hasReminder()) {
-                            Intent i = new Intent(getContext(), TodoNotificationService.class);
-                            i.putExtra(TodoNotificationService.TODOTEXT, item.getToDoText());
-                            i.putExtra(TodoNotificationService.TODOUUID, item.getIdentifier());
-                            createAlarm(i, item.getIdentifier().hashCode(), item.getToDoDate().getTime());
-                        }
                     }
                 }).show();
     }

@@ -2,6 +2,7 @@ package com.example.avjindersinghsekhon.minimaltodo.Main.viewmodel
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.avjindersinghsekhon.minimaltodo.Main.model.AlarmHelper
 import com.example.avjindersinghsekhon.minimaltodo.Main.model.ToDoRepository
 import com.example.avjindersinghsekhon.minimaltodo.Utility.ToDoItem
 import io.reactivex.Scheduler
@@ -11,6 +12,7 @@ import io.reactivex.schedulers.Schedulers
 
 class ToDoViewModel(
         private val repository: ToDoRepository,
+        private val alarmHelper: AlarmHelper,
         private val ioThread: Scheduler = Schedulers.io(),
         private val mainThread: Scheduler = AndroidSchedulers.mainThread()
 ): ViewModel() {
@@ -28,16 +30,20 @@ class ToDoViewModel(
                 .observeOn(mainThread)
                 .subscribe ({
                     items.value = it
+
+                    alarmHelper.setAlarms(it)
                 }, { /** Handle error */}
                 )
     }
 
     fun saveItem(item: ToDoItem) {
         repository.saveItem(item)
+        alarmHelper.createAlarmIfNecessary(item)
     }
 
     fun deleteItem(item: ToDoItem) {
         repository.deleteItem(item)
+        alarmHelper.deleteAlarm(item)
     }
 
     override fun onCleared() {
