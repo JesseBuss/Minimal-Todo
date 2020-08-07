@@ -18,6 +18,7 @@ import android.widget.TextView;
 import com.example.avjindersinghsekhon.minimaltodo.Analytics.AnalyticsApplication;
 import com.example.avjindersinghsekhon.minimaltodo.AppDefault.AppDefaultFragment;
 import com.example.avjindersinghsekhon.minimaltodo.Main.MainActivity;
+import com.example.avjindersinghsekhon.minimaltodo.Main.model.StoreHelper;
 import com.example.avjindersinghsekhon.minimaltodo.Main.view.MainFragment;
 import com.example.avjindersinghsekhon.minimaltodo.R;
 import com.example.avjindersinghsekhon.minimaltodo.Utility.StoreRetrieveData;
@@ -40,6 +41,7 @@ import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper
 import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.SHARED_PREF_DATA_SET_CHANGED;
 import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.THEME_PREFERENCES;
 import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.THEME_SAVED;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.StoreHelper.FILENAME;
 
 public class ReminderFragment extends AppDefaultFragment {
     private TextView mtoDoTextTextView;
@@ -66,8 +68,8 @@ public class ReminderFragment extends AppDefaultFragment {
         } else {
             getActivity().setTheme(R.style.CustomStyle_DarkTheme);
         }
-        storeRetrieveData = new StoreRetrieveData(getContext(), MainFragment.FILENAME);
-        mToDoItems = MainFragment.getLocallyStoredData(storeRetrieveData);
+        storeRetrieveData = new StoreRetrieveData(getContext(), FILENAME);
+        mToDoItems = StoreHelper.getLocallyStoredData(storeRetrieveData);
 
         ((AppCompatActivity) getActivity()).setSupportActionBar((Toolbar) view.findViewById(R.id.toolbar));
 

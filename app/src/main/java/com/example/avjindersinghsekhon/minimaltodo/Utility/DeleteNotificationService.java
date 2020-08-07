@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.CHANGE_OCCURED;
 import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.SHARED_PREF_DATA_SET_CHANGED;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.StoreHelper.FILENAME;
 
 public class DeleteNotificationService extends IntentService {
 
@@ -24,7 +25,7 @@ public class DeleteNotificationService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        storeRetrieveData = new StoreRetrieveData(this, MainFragment.FILENAME);
+        storeRetrieveData = new StoreRetrieveData(this, FILENAME);
         UUID todoID = (UUID) intent.getSerializableExtra(TodoNotificationService.TODOUUID);
 
         mToDoItems = loadData();
