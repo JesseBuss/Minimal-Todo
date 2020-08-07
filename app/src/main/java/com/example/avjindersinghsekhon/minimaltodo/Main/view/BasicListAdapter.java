@@ -1,47 +1,36 @@
 package com.example.avjindersinghsekhon.minimaltodo.Main.view;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.amulyakhare.textdrawable.TextDrawable;
-import com.example.avjindersinghsekhon.minimaltodo.AddToDo.AddToDoActivity;
 import com.example.avjindersinghsekhon.minimaltodo.AddToDo.AddToDoFragment;
 import com.example.avjindersinghsekhon.minimaltodo.Main.model.ToDoListener;
+import com.example.avjindersinghsekhon.minimaltodo.Main.model.ToDoTheme;
 import com.example.avjindersinghsekhon.minimaltodo.R;
 import com.example.avjindersinghsekhon.minimaltodo.Utility.ItemTouchHelperClass;
 import com.example.avjindersinghsekhon.minimaltodo.Utility.ToDoItem;
-import com.example.avjindersinghsekhon.minimaltodo.Utility.TodoNotificationService;
-import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
-import static android.content.Context.MODE_PRIVATE;
-import static com.example.avjindersinghsekhon.minimaltodo.AddToDo.AddToDoActivity.TODOITEM;
-import static com.example.avjindersinghsekhon.minimaltodo.Main.view.MainFragment.LIGHTTHEME;
-import static com.example.avjindersinghsekhon.minimaltodo.Main.view.MainFragment.THEME_PREFERENCES;
-import static com.example.avjindersinghsekhon.minimaltodo.Main.view.MainFragment.THEME_SAVED;
 
 public class BasicListAdapter extends RecyclerView.Adapter<BasicViewHolder> implements ItemTouchHelperClass.ItemTouchHelperAdapter {
     private ArrayList<ToDoItem> items;
     private ToDoListener listener;
     private Context context;
+    private ToDoTheme theme;
 
-    public BasicListAdapter(ArrayList<ToDoItem> items, ToDoListener listener, Context context) {
+    public BasicListAdapter(ArrayList<ToDoItem> items, ToDoListener listener, Context context, ToDoTheme theme) {
         this.items = items;
         this.listener = listener;
         this.context = context;
+        this.theme = theme;
     }
 
     @Override
@@ -100,15 +89,11 @@ public class BasicListAdapter extends RecyclerView.Adapter<BasicViewHolder> impl
     public void onBindViewHolder(final BasicViewHolder holder, final int position) {
         ToDoItem item = items.get(position);
         holder.item = item;
-//            if(item.getToDoDate()!=null && item.getToDoDate().before(new Date())){
-//                item.setToDoDate(null);
-//            }
-        SharedPreferences sharedPreferences = context.getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE);
         //Background color for each to-do item. Necessary for night/day mode
         int bgColor;
         //color of title text in our to-do item. White for night mode, dark gray for day mode
         int todoTextColor;
-        if (sharedPreferences.getString(THEME_SAVED, LIGHTTHEME).equals(LIGHTTHEME)) {
+        if (theme.isLightTheme()) {
             bgColor = Color.WHITE;
             todoTextColor = context.getResources().getColor(R.color.secondary_text);
         } else {

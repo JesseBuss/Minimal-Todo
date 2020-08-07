@@ -48,6 +48,10 @@ import static android.app.Activity.RESULT_OK;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static android.content.Context.MODE_PRIVATE;
 import static com.example.avjindersinghsekhon.minimaltodo.AddToDo.AddToDoActivity.TODOITEM;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.DARKTHEME;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.LIGHTTHEME;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.THEME_PREFERENCES;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.THEME_SAVED;
 
 public class AddToDoFragment extends AppDefaultFragment implements DatePickerDialog.OnDateSetListener, TimePickerDialog.OnTimeSetListener {
     private static final String TAG = "AddToDoFragment";
@@ -100,8 +104,8 @@ public class AddToDoFragment extends AppDefaultFragment implements DatePickerDia
         TextView reminderRemindMeTextView;
 
 
-        theme = getActivity().getSharedPreferences(MainFragment.THEME_PREFERENCES, MODE_PRIVATE).getString(MainFragment.THEME_SAVED, MainFragment.LIGHTTHEME);
-        if (theme.equals(MainFragment.LIGHTTHEME)) {
+        theme = getActivity().getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).getString(THEME_SAVED, LIGHTTHEME);
+        if (theme.equals(LIGHTTHEME)) {
             getActivity().setTheme(R.style.CustomStyle_LightTheme);
             Log.d("OskarSchindler", "Light Theme");
         } else {
@@ -146,7 +150,7 @@ public class AddToDoFragment extends AppDefaultFragment implements DatePickerDia
 
         reminderIconImageButton = (ImageButton) view.findViewById(R.id.userToDoReminderIconImageButton);
         reminderRemindMeTextView = (TextView) view.findViewById(R.id.userToDoRemindMeTextView);
-        if (theme.equals(MainFragment.DARKTHEME)) {
+        if (theme.equals(DARKTHEME)) {
             reminderIconImageButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_alarm_add_white_24dp));
             reminderRemindMeTextView.setTextColor(Color.WHITE);
         }
@@ -318,7 +322,7 @@ public class AddToDoFragment extends AppDefaultFragment implements DatePickerDia
 
 
                 DatePickerDialog datePickerDialog = DatePickerDialog.newInstance(AddToDoFragment.this, year, month, day);
-                if (theme.equals(MainFragment.DARKTHEME)) {
+                if (theme.equals(DARKTHEME)) {
                     datePickerDialog.setThemeDark(true);
                 }
                 datePickerDialog.show(getActivity().getFragmentManager(), "DateFragment");
@@ -345,7 +349,7 @@ public class AddToDoFragment extends AppDefaultFragment implements DatePickerDia
                 int minute = calendar.get(Calendar.MINUTE);
 
                 TimePickerDialog timePickerDialog = TimePickerDialog.newInstance(AddToDoFragment.this, hour, minute, DateFormat.is24HourFormat(getContext()));
-                if (theme.equals(MainFragment.DARKTHEME)) {
+                if (theme.equals(DARKTHEME)) {
                     timePickerDialog.setThemeDark(true);
                 }
                 timePickerDialog.show(getActivity().getFragmentManager(), "TimeFragment");
@@ -472,7 +476,7 @@ public class AddToDoFragment extends AppDefaultFragment implements DatePickerDia
     }
 
     private String getThemeSet() {
-        return getActivity().getSharedPreferences(MainFragment.THEME_PREFERENCES, MODE_PRIVATE).getString(MainFragment.THEME_SAVED, MainFragment.LIGHTTHEME);
+        return getActivity().getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).getString(THEME_SAVED, LIGHTTHEME);
     }
 
     public void hideKeyboard(EditText et) {

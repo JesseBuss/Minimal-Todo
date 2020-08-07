@@ -15,6 +15,11 @@ import com.example.avjindersinghsekhon.minimaltodo.AppDefault.AppDefaultActivity
 import com.example.avjindersinghsekhon.minimaltodo.Main.view.MainFragment;
 import com.example.avjindersinghsekhon.minimaltodo.R;
 
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.DARKTHEME;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.LIGHTTHEME;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.THEME_PREFERENCES;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.THEME_SAVED;
+
 public class AboutActivity extends AppDefaultActivity {
 
     private TextView mVersionTextView;
@@ -29,8 +34,8 @@ public class AboutActivity extends AppDefaultActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
 
-        theme = getSharedPreferences(MainFragment.THEME_PREFERENCES, MODE_PRIVATE).getString(MainFragment.THEME_SAVED, MainFragment.LIGHTTHEME);
-        if (theme.equals(MainFragment.DARKTHEME)) {
+        theme = getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).getString(THEME_SAVED, LIGHTTHEME);
+        if (theme.equals(DARKTHEME)) {
             Log.d("OskarSchindler", "One");
             setTheme(R.style.CustomStyle_DarkTheme);
         } else {

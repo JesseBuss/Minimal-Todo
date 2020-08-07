@@ -1,6 +1,7 @@
 package com.example.avjindersinghsekhon.minimaltodo.Settings;
 
 import android.app.FragmentManager;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import androidx.core.app.NavUtils;
 import androidx.appcompat.app.AppCompatActivity;
@@ -8,8 +9,14 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 
 import com.example.avjindersinghsekhon.minimaltodo.Analytics.AnalyticsApplication;
+import com.example.avjindersinghsekhon.minimaltodo.Main.MainActivity;
 import com.example.avjindersinghsekhon.minimaltodo.Main.view.MainFragment;
 import com.example.avjindersinghsekhon.minimaltodo.R;
+
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.LIGHTTHEME;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.RECREATE_ACTIVITY;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.THEME_PREFERENCES;
+import static com.example.avjindersinghsekhon.minimaltodo.Main.model.PrefsHelper.THEME_SAVED;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -25,8 +32,8 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
         app = (AnalyticsApplication) getApplication();
-        String theme = getSharedPreferences(MainFragment.THEME_PREFERENCES, MODE_PRIVATE).getString(MainFragment.THEME_SAVED, MainFragment.LIGHTTHEME);
-        if (theme.equals(MainFragment.LIGHTTHEME)) {
+        String theme = getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).getString(THEME_SAVED, LIGHTTHEME);
+        if (theme.equals(LIGHTTHEME)) {
             setTheme(R.style.CustomStyle_LightTheme);
         } else {
             setTheme(R.style.CustomStyle_DarkTheme);
@@ -57,11 +64,28 @@ public class SettingsActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 if (NavUtils.getParentActivityName(this) != null) {
-                    NavUtils.navigateUpFromSameTask(this);
+                    if (shouldRecreate()) {
+                        MainActivity.startFreshActivity(this);
+                    } else {
+                        NavUtils.navigateUpFromSameTask(this);
+                    }
                 }
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (shouldRecreate()) {
+            MainActivity.startFreshActivity(this);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private boolean shouldRecreate() {
+        return getSharedPreferences(THEME_PREFERENCES, MODE_PRIVATE).getBoolean(RECREATE_ACTIVITY, false);
     }
 }
